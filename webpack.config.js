@@ -1,3 +1,4 @@
+const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const webpack = require('webpack');
 const dotenv = require('dotenv');
@@ -12,6 +13,7 @@ module.exports = {
     'app/index': './src/index.ts'
   },
   output: {
+    path: path.resolve(__dirname, 'dist/js'),
     filename: 'bundle.js'
   },
   plugins: [

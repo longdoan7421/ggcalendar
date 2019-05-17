@@ -26,6 +26,6 @@
   },
   "scripts": {
     "start": "gulp start",
-    "build": "webpack --mode production"
+    "build": "gulp compile load-style"
   }
 }

@@ -45,6 +45,10 @@ let dataManager: DataManager = new DataManager({
 });
 
 let scheduleObj: Schedule = new Schedule({
+  allowKeyboardInteraction: false,
+  timezone: TIME_ZONE,
+  editorTemplate: '#EventEditorTemplate',
+  dataBinding,
   eventSettings: {
     dataSource: dataManager,
     fields: {
@@ -56,9 +60,11 @@ let scheduleObj: Schedule = new Schedule({
       endTime: { name: 'EndTime', validation: { required: true } }
     }
   },
-  timezone: TIME_ZONE,
-  dataBinding,
-  editorTemplate: '#EventEditorTemplate',
+  workHours: {
+    highlight: true,
+    start: '09:00',
+    end: '19:00'
+  },
   popupOpen: (args: PopupOpenEventArgs) => {
     if (args.type === 'Editor') {
       let startElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
@@ -71,12 +77,24 @@ let scheduleObj: Schedule = new Schedule({
       }
     }
   },
-  workHours: {
-    highlight: true,
-    start: '09:00',
-    end: '19:00'
-  },
-  allowKeyboardInteraction: false
+  actionBegin: async (args: ActionEventArgs) => {
+    if (args.requestType === 'eventCreate') {
+      let flag = Math.random();
+      console.log('before')
+      await sleep(5000);
+      console.log('after')
+      if (flag < 0.5) {
+        args.cancel = true;
+      } else {
+        args.cancel = false;
+      }
+    }
+}
 });
 
+// scheduleObj.addEventListener('add')
 scheduleObj.appendTo('#Schedule');
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
