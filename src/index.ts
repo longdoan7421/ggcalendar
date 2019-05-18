@@ -1,6 +1,7 @@
 import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, ActionEventArgs } from '@syncfusion/ej2-schedule';
 import { DateTimePicker } from '@syncfusion/ej2-calendars';
 import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
+import axios from 'axios';
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 
@@ -30,12 +31,25 @@ function dataBinding(e: { [key: string]: Object }): void {
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
-        IsReadonly: true,
+        IsReadonly: true
         // IsBlock: true
       });
     }
   }
   e.result = scheduleData;
+}
+
+function createAppointment(appointment: object): void {
+  axios
+    .post('/api/add_event.php', {
+      ...appointment
+    })
+    .then(response => {
+      console.log({response});
+    })
+    .catch(error => {
+      console.log({error});
+    });
 }
 
 let dataManager: DataManager = new DataManager({
@@ -77,24 +91,12 @@ let scheduleObj: Schedule = new Schedule({
       }
     }
   },
-  actionBegin: async (args: ActionEventArgs) => {
+  actionBegin: (args: ActionEventArgs) => {
     if (args.requestType === 'eventCreate') {
-      let flag = Math.random();
-      console.log('before')
-      await sleep(5000);
-      console.log('after')
-      if (flag < 0.5) {
-        args.cancel = true;
-      } else {
-        args.cancel = false;
-      }
+      args.cancel = true;
+      createAppointment(args.data);
     }
-}
+  }
 });
 
-// scheduleObj.addEventListener('add')
 scheduleObj.appendTo('#Schedule');
-
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}

@@ -2,10 +2,7 @@
 
 var gulp = require('gulp');
 
-/**
- * Load the sample in src/app/index
- */
-gulp.task('start', ['compile', 'load-style'], function (done) {
+gulp.task('serve', ['compile', 'load-css'], function (done) {
     var browserSync = require('browser-sync');
     var bs = browserSync.create('GGCalendar');
     var options = {
@@ -18,9 +15,10 @@ gulp.task('start', ['compile', 'load-style'], function (done) {
     gulp.watch('src/**/*.ts', ['compile', bs.reload]);
 });
 
-/**
- * Compile TypeScript to JS
- */
+gulp.task('watch', function () {
+    gulp.watch('src/**/*.ts', ['compile']);
+});
+
 gulp.task('compile', function (done) {
     var webpack = require('webpack');
     var webpackStream = require('webpack-stream');
@@ -40,6 +38,6 @@ gulp.task('compile', function (done) {
         });
 });
 
-gulp.task('load-style', function () {
+gulp.task('load-css', function () {
     gulp.src('./node_modules/@syncfusion/ej2/material.css').pipe(gulp.dest('./dist/css'));
 });
