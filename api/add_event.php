@@ -5,7 +5,7 @@
 
   $dotenv = Dotenv\Dotenv::create(__DIR__, '/../.env');
   $dotenv->load();
-
+  
   $inputJSON = file_get_contents('php://input');
   if ($inputJSON) {
     $appointments = json_decode($inputJSON, true);

@@ -9,6 +9,14 @@ const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
 const TIME_ZONE: string = process.env['TIME_ZONE'];
 
+function toggleSpinner(mode?: string): void {
+  if (mode === 'on') {
+    document.getElementById('loader').style.display = 'block';
+  } else {
+    document.getElementById('loader').style.display = 'none';
+  }
+}
+
 function dataBinding(e: { [key: string]: Object }): void {
   let items: { [key: string]: Object }[] = (e.result as { [key: string]: Object }).items as { [key: string]: Object }[];
   let scheduleData: Object[] = [];
@@ -58,8 +66,12 @@ function createAppointment(appointment: object): void {
 
       throw new Error('Response invalid');
     })
+    .then(() => {
+      toggleSpinner('off');
+    })
     .catch(error => {
       console.log({error});
+      toggleSpinner('off');
       alert('There is something wrong with server. Please try again later.')
     });
 }
@@ -71,6 +83,7 @@ let dataManager: DataManager = new DataManager({
 });
 
 let scheduleObj: Schedule = new Schedule({
+  height: '800px',
   allowKeyboardInteraction: false,
   timezone: TIME_ZONE,
   editorTemplate: '#EventEditorTemplate',
@@ -106,6 +119,7 @@ let scheduleObj: Schedule = new Schedule({
   actionBegin: (args: ActionEventArgs) => {
     if (args.requestType === 'eventCreate') {
       args.cancel = true;
+      toggleSpinner('on');
       createAppointment(args.data);
     }
   }
