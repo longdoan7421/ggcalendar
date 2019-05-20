@@ -36,6 +36,20 @@
     $event = new Google_Service_Calendar_Event($newAppointment);
     $calendarId = getenv('CALENDAR_ID');
 
-    $result = $service->events->insert($calendarId, $event);
+    try {
+      $result = $service->events->insert($calendarId, $event);
+      echo json_encode([
+        'code' => 200,
+        'event' => [
+          'id' => $result->id,
+          'link' => $result->htmlLink
+        ]
+      ]);
+    } catch (Google_Service_Exception $error) {
+      echo json_encode([
+        'code' => 500,
+        'errors' => $error->getErrors()
+      ]);
+    }
   }
 ?>

@@ -1,16 +1,30 @@
 ## Installing
+
 You can run the below command to install all dependent packages related to this project.
 
 ```
 npm install
 ```
 
-## Running
-You can use the below npm script to run the web application.
+## Setup
 
+1. Create a google service account and store credential in gg-calendar.json
+2. Add service account email into schedule will be shared
+3. Build docker image
 ```
-npm run start
+docker-compose build
 ```
+
+## Running
+1. Build essential files
+```
+npm run build
+```
+2. Run docker
+```
+docker-compose up
+```
+3. Open http://localhost:8080
 
 ## Resources
 

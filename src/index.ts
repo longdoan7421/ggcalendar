@@ -45,10 +45,22 @@ function createAppointment(appointment: object): void {
       ...appointment
     })
     .then(response => {
-      console.log({response});
+      if (response.data && response.data.code === 200) {
+        scheduleObj.refreshEvents();
+        return;
+      }
+
+      if (response.data && response.data.code === 500) {
+        console.log(response.data.errors);
+        alert('Cannot create appointment.');
+        return;
+      }
+
+      throw new Error('Response invalid');
     })
     .catch(error => {
       console.log({error});
+      alert('There is something wrong with server. Please try again later.')
     });
 }
 
