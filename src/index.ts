@@ -8,6 +8,7 @@ Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
 const TIME_ZONE: string = process.env['TIME_ZONE'];
+console.log({env: process.env})
 
 function toggleSpinner(mode?: string): void {
   if (mode === 'on') {
