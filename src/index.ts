@@ -2,19 +2,32 @@ import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, Actio
 import { DateTimePicker } from '@syncfusion/ej2-calendars';
 import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
 import axios from 'axios';
+const moment = require('moment-timezone');
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 
+console.log({env: process.env});
 const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
 const TIME_ZONE: string = process.env['TIME_ZONE'];
 
-function toggleSpinner(mode?: string): void {
+function toggleSpinner(mode: string): void {
   if (mode === 'on') {
     document.getElementById('loader').style.display = 'block';
   } else {
     document.getElementById('loader').style.display = 'none';
   }
+}
+
+function convertToTimeZone(date: Date, timeZone: string = TIME_ZONE): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+
+  let dateTimeWithTz = moment.tz(`${year}-${month}-${day} ${hour}:${minute}`, 'YYYY-M-D H:m', timeZone);
+  return dateTimeWithTz.format();
 }
 
 function dataBinding(e: { [key: string]: Object }): void {
@@ -47,10 +60,20 @@ function dataBinding(e: { [key: string]: Object }): void {
   e.result = scheduleData;
 }
 
-function createAppointment(appointment: object): void {
+function createAppointment(events: object): void {
+  let event = events[0];
+
+  let appointment = Object.assign({},
+    event,
+    {
+      StartTime: convertToTimeZone(event['StartTime'], TIME_ZONE),
+      EndTime: convertToTimeZone(event['EndTime'], TIME_ZONE),
+    }
+  );
+
   axios
     .post('/api/add_event.php', {
-      ...appointment
+      appointment
     })
     .then(response => {
       if (response.data && response.data.code === 200) {

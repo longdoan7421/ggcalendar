@@ -12,22 +12,20 @@ try {
 
 $inputJSON = file_get_contents('php://input');
 if ($inputJSON) {
-  $appointments = json_decode($inputJSON, true);
+  $input = json_decode($inputJSON, true);
+  $appointment = $input['appointment'];
 
-  $newAppointment = [];
-  foreach ($appointments as $appointment) {
-    $newAppointment = array(
-      'summary' => $appointment['Title'],
-      'location' => isset($appointment['Location']) ? $appointment['Location'] : '',
-      'description' => isset($appointment['Description']) ? $appointment['Description'] : '',
-      'start' => array(
-        'dateTime' => date('c', strtotime($appointment['StartTime']))
-      ),
-      'end' => array(
-        'dateTime' => date('c', strtotime($appointment['EndTime']))
-      )
-    );
-  }
+  $standardizedAppointment = [
+    'summary' => $appointment['Title'],
+    'location' => isset($appointment['Location']) ? $appointment['Location'] : '',
+    'description' => isset($appointment['Description']) ? $appointment['Description'] : '',
+    'start' => array(
+      'dateTime' => date('c', strtotime($appointment['StartTime']))
+    ),
+    'end' => array(
+      'dateTime' => date('c', strtotime($appointment['EndTime']))
+    )
+  ];
 
   if (getenv('NODE_ENV') === 'production') {
     $private_key = base64_decode(getenv('GOOGLE_API_PRIVATE_KEY_BASE64'));
@@ -51,7 +49,7 @@ if ($inputJSON) {
   $client->setScopes(Google_Service_Calendar::CALENDAR);
 
   $service = new Google_Service_Calendar($client);
-  $event = new Google_Service_Calendar_Event($newAppointment);
+  $event = new Google_Service_Calendar_Event($standardizedAppointment);
   $calendarId = getenv('CALENDAR_ID');
 
   try {

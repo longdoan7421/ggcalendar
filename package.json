@@ -12,10 +12,13 @@
   "dependencies": {
     "@syncfusion/ej2": "*",
     "axios": "^0.18.0",
-    "dotenv": "^8.0.0"
+    "dotenv": "^8.0.0",
+    "moment": "^2.24.0",
+    "moment-timezone": "^0.5.25"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
+    "@types/moment-timezone": "^0.5.12",
     "browser-sync": "^2.18.12",
     "gulp": "^3.9.1",
     "ts-loader": "^5.2.2",
