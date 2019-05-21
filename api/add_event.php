@@ -3,8 +3,12 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 session_start();
 
-$dotenv = Dotenv\Dotenv::create(__DIR__, '/../.env');
-$dotenv->load();
+try {
+  $dotenv = Dotenv\Dotenv::create(__DIR__, '/../.env');
+  $dotenv->load();
+} catch (\Exception $error) {
+
+}
 
 $inputJSON = file_get_contents('php://input');
 if ($inputJSON) {
