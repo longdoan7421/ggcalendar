@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 
 const env = dotenv.config();
 const isDevelopment = process.env.NODE_ENV !== 'production';
-console.log({env, process: process.env});
 
 module.exports = {
   mode: isDevelopment ? 'development' : 'production',
@@ -20,9 +19,9 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env': JSON.stringify({
-        CALENDAR_ID: env.parsed.CALENDAR_ID,
-        API_KEY: env.parsed.API_KEY,
-        TIME_ZONE: env.parsed.TIME_ZONE
+        CALENDAR_ID: process.env.CALENDAR_ID,
+        API_KEY: process.env.API_KEY,
+        TIME_ZONE: process.env.TIME_ZONE
       })
     })
   ],
