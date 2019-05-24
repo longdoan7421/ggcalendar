@@ -12,16 +12,39 @@
     <link href="css/material.css" rel="stylesheet" />
     <link href="css/main.css" rel="stylesheet" />
     <style>
-    .custom-event-editor .e-textlabel {
-        padding-right: 15px;
-        text-align: right;
-    }
+        .custom-event-editor .e-textlabel {
+            padding-right: 15px;
+            text-align: right;
+        }
 
-    .custom-event-editor td {
-        padding: 7px;
-        padding-right: 16px;
-    }
-</style>
+        .custom-event-editor td {
+            padding: 7px;
+            padding-right: 16px;
+        }
+
+        .e-schedule .e-block-appointment {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .e-schedule .e-vertical-view .e-date-header-wrap table col,
+        .e-schedule .e-vertical-view .e-content-wrap table col {
+            width: 200px;
+        }
+
+        .e-schedule .e-vertical-view .e-time-cells-wrap table td,
+        .e-schedule .e-vertical-view .e-work-cells {
+            height: 100px;
+        }
+
+        .e-schedule .e-month-view .e-work-cells,
+        .e-schedule .e-month-view .e-date-header-wrap table col {
+            width: 200px;
+        }
+
+        .e-schedule .e-month-view .e-work-cells {
+            height: 200px;
+        }
+    </style>
 </head>
 <script id="EventEditorTemplate" type="text/x-template">
     <table class="custom-event-editor" width="100%" cellpadding="5">
@@ -39,17 +62,17 @@
                 </td>
             </tr>
             <tr>
-                <td class="e-textlabel">From</td>
+                <td class="e-textlabel">Start Time</td>
                 <td colspan="4">
                     <input type="text" id="StartTime" class="e-field" name="StartTime" />
                 </td>
             </tr>
-            <tr>
-                <td class="e-textlabel">To</td>
+            <!-- <tr>
+                <td class="e-textlabel">End Time</td>
                 <td colspan="4">
                     <input type="text" id="EndTime" class="e-field" name="EndTime" />
                 </td>
-            </tr>
+            </tr> -->
             <tr>
                 <td class="e-textlabel">Description</td>
                 <td colspan="4">

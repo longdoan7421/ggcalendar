@@ -13,9 +13,11 @@ const TIME_ZONE: string = process.env['TIME_ZONE'];
 
 function toggleSpinner(mode: string): void {
   if (mode === 'on') {
-    document.getElementById('loader').style.display = 'block';
+    scheduleObj.showSpinner();
+    // document.getElementById('loader').style.display = 'block';
   } else {
-    document.getElementById('loader').style.display = 'none';
+    scheduleObj.hideSpinner();
+    // document.getElementById('loader').style.display = 'none';
   }
 }
 
@@ -52,8 +54,8 @@ function dataBinding(e: { [key: string]: Object }): void {
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
-        IsReadonly: true
-        // IsBlock: true
+        IsReadonly: true,
+        IsBlock: true
       });
     }
   }
@@ -62,12 +64,14 @@ function dataBinding(e: { [key: string]: Object }): void {
 
 function createAppointment(events: object): void {
   let event = events[0];
+  let startTime = convertToTimeZone(event['StartTime'], TIME_ZONE);
+  let endTime = moment(startTime).add(1, 'h').tz(TIME_ZONE).format();
 
   let appointment = Object.assign({},
     event,
     {
-      StartTime: convertToTimeZone(event['StartTime'], TIME_ZONE),
-      EndTime: convertToTimeZone(event['EndTime'], TIME_ZONE),
+      StartTime: startTime,
+      EndTime: endTime,
     }
   );
 
@@ -108,10 +112,12 @@ let dataManager: DataManager = new DataManager({
 let scheduleObj: Schedule = new Schedule({
   height: '800px',
   allowKeyboardInteraction: false,
-  timezone: TIME_ZONE,
+  allowDragAndDrop: false,
   editorTemplate: '#EventEditorTemplate',
+  views: ['Week', 'Agenda'],
   dataBinding,
   eventSettings: {
+    enableTooltip: true,
     dataSource: dataManager,
     fields: {
       id: 'Id',
@@ -119,24 +125,35 @@ let scheduleObj: Schedule = new Schedule({
       location: { name: 'Location' },
       description: { name: 'Description' },
       startTime: { name: 'StartTime', validation: { required: true } },
-      endTime: { name: 'EndTime', validation: { required: true } }
+      // endTime: { name: 'EndTime', validation: { required: true } }
     }
   },
+  timezone: TIME_ZONE,
   workHours: {
     highlight: true,
-    start: '09:00',
-    end: '19:00'
+    start: '08:00',
+    end: '18:00'
+  },
+  workDays: [1, 2, 3, 4, 5],
+  showWeekend: false,
+  startHour: '08:00',
+  endHour: '18:00',
+  timeScale: {
+    slotCount: 1
   },
   popupOpen: (args: PopupOpenEventArgs) => {
     if (args.type === 'Editor') {
       let startElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
       if (!startElement.classList.contains('e-datetimepicker')) {
-        new DateTimePicker({ value: new Date(startElement.value) || new Date() }, startElement);
+        new DateTimePicker({
+          value: new Date(startElement.value) || new Date(),
+          step: 15
+        }, startElement);
       }
-      let endElement: HTMLInputElement = args.element.querySelector('#EndTime') as HTMLInputElement;
-      if (!endElement.classList.contains('e-datetimepicker')) {
-        new DateTimePicker({ value: new Date(endElement.value) || new Date() }, endElement);
-      }
+      // let endElement: HTMLInputElement = args.element.querySelector('#EndTime') as HTMLInputElement;
+      // if (!endElement.classList.contains('e-datetimepicker')) {
+      //   new DateTimePicker({ value: new Date(endElement.value) || new Date() }, endElement);
+      // }
     }
   },
   actionBegin: (args: ActionEventArgs) => {
