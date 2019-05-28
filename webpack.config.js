@@ -3,7 +3,8 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const webpack = require('webpack');
 const dotenv = require('dotenv');
 
-const env = dotenv.config();
+const myenv = dotenv.config();
+const ENV = myenv && myenv.parsed ? myenv.parsed : process.env;
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
 module.exports = {
@@ -18,11 +19,9 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': JSON.stringify({
-        CALENDAR_ID: process.env.CALENDAR_ID,
-        API_KEY: process.env.API_KEY,
-        TIME_ZONE: process.env.TIME_ZONE
-      })
+      'process.env': JSON.stringify(
+        Object.assign({}, ENV)
+      )
     })
   ],
   module: {
