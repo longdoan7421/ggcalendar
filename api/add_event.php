@@ -53,7 +53,7 @@ if ($inputJSON) {
   $calendarId = getenv('CALENDAR_ID');
 
   try {
-    $result = $service->events->insert($calendarId, $event);
+    // $result = $service->events->insert($calendarId, $event);
     echo json_encode([
       'code' => 200,
       'event' => [

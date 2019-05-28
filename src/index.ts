@@ -1,5 +1,5 @@
 import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, ActionEventArgs } from '@syncfusion/ej2-schedule';
-import { DateTimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-calendars';
+import { DateTimePicker, DatePicker, TimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-calendars';
 import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
 import axios from 'axios';
 const moment = require('moment-timezone');
@@ -10,6 +10,8 @@ console.log({ env: process.env });
 const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
 const TIME_ZONE: string = process.env['TIME_ZONE'];
+const START_HOUR: string = process.env['START_HOUR'] || '08:00';
+const END_HOUR: string = process.env['END_HOUR'] || '18:00';
 
 let dataManager: DataManager = new DataManager({
   url: 'https://www.googleapis.com/calendar/v3/calendars/' + CALENDAR_ID + '/events?key=' + API_KEY,
@@ -22,7 +24,7 @@ let scheduleObj: Schedule = new Schedule({
   allowKeyboardInteraction: false,
   allowDragAndDrop: false,
   editorTemplate: '#EventEditorTemplate',
-  views: ['Week', 'Agenda'],
+  views: ['Week'],
   dataBinding,
   eventSettings: {
     enableTooltip: true,
@@ -33,40 +35,44 @@ let scheduleObj: Schedule = new Schedule({
       location: { name: 'Location' },
       description: { name: 'Description' },
       startTime: { name: 'StartTime', validation: { required: true } }
-      // endTime: { name: 'EndTime', validation: { required: true } }
     }
   },
   timezone: TIME_ZONE,
   workHours: {
     highlight: true,
-    start: '08:00',
-    end: '18:00'
+    start: START_HOUR,
+    end: END_HOUR
   },
   workDays: [1, 2, 3, 4, 5],
   showWeekend: false,
-  startHour: '08:00',
-  endHour: '18:00',
+  startHour: START_HOUR,
+  endHour: END_HOUR,
   timeScale: {
     slotCount: 1
   },
   popupOpen: (args: PopupOpenEventArgs) => {
     if (args.type === 'Editor') {
-      let startElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
-      if (!startElement.classList.contains('e-datetimepicker')) {
-        new DateTimePicker(
-          {
-            strictMode: true,
-            value: new Date(startElement.value) || new Date(),
-            step: 15,
-            renderDayCell: setDisabledDate
-          },
-          startElement
-        );
+      let startTimeElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
+      let startTimeWithoutDateElement: HTMLInputElement = args.element.querySelector('#StartTimeWithoutDate') as HTMLInputElement;
+      const selectedTime = startTimeElement.value;
+
+      if (!startTimeElement.classList.contains('e-datepicker')) {
+        new DatePicker({
+          strictMode: true,
+          value: new Date(selectedTime) || new Date(),
+          renderDayCell: setDisabledDate,
+        }, startTimeElement);
       }
-      // let endElement: HTMLInputElement = args.element.querySelector('#EndTime') as HTMLInputElement;
-      // if (!endElement.classList.contains('e-datetimepicker')) {
-      //   new DateTimePicker({ value: new Date(endElement.value) || new Date() }, endElement);
-      // }
+
+      if (!startTimeWithoutDateElement.classList.contains('e-timepicker')) {
+        new TimePicker({
+          strictMode: true,
+          min: new Date('3/8/2017 8:00 AM'),
+          max: new Date('3/8/2017 6:00 PM'),
+          value: new Date(selectedTime) || new Date(),
+          step: 15
+        }, startTimeWithoutDateElement);
+      }
     }
   },
   actionBegin: (args: ActionEventArgs) => {
@@ -83,27 +89,6 @@ scheduleObj.appendTo('#Schedule');
 /*************************************************************************************************************************************
  *                                                             Function                                                               *
  *************************************************************************************************************************************/
-function toggleSpinner(mode: string): void {
-  if (mode === 'on') {
-    scheduleObj.showSpinner();
-    // document.getElementById('loader').style.display = 'block';
-  } else {
-    scheduleObj.hideSpinner();
-    // document.getElementById('loader').style.display = 'none';
-  }
-}
-
-function convertToTimeZone(date: Date, timeZone: string = TIME_ZONE): string {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  let dateTimeWithTz = moment.tz(`${year}-${month}-${day} ${hour}:${minute}`, 'YYYY-M-D H:m', timeZone);
-  return dateTimeWithTz.format();
-}
-
 function dataBinding(e: { [key: string]: Object }): void {
   let items: { [key: string]: Object }[] = (e.result as { [key: string]: Object }).items as { [key: string]: Object }[];
   let scheduleData: Object[] = [];
@@ -136,7 +121,7 @@ function dataBinding(e: { [key: string]: Object }): void {
 
 function createAppointment(events: object): void {
   let event = events[0];
-  let startTime = convertToTimeZone(event['StartTime'], TIME_ZONE);
+  let startTime = convertToTimeZone(event['StartTime'], event['StartTimeWithoutDate'], TIME_ZONE);
   let endTime = moment(startTime)
     .add(1, 'h')
     .tz(TIME_ZONE)
@@ -174,8 +159,27 @@ function createAppointment(events: object): void {
       alert('There is something wrong with server. Please try again later.');
     });
 }
+
+function toggleSpinner(mode: string): void {
+  if (mode === 'on') {
+    scheduleObj.showSpinner();
+    // document.getElementById('loader').style.display = 'block';
+  } else {
+    scheduleObj.hideSpinner();
+    // document.getElementById('loader').style.display = 'none';
+  }
+}
+
+function convertToTimeZone(date: Date, time: string, timeZone: string = TIME_ZONE): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let dateTimeWithTz = moment.tz(`${year}-${month}-${day} ${time}`, 'YYYY-M-D h:mm a', timeZone);
+  return dateTimeWithTz.format();
+}
+
 function setDisabledDate(args: RenderDayCellEventArgs): void {
-  /*Date need to be disabled*/
   if (args.date.getDay() === 0 || args.date.getDay() === 6) {
     args.isDisabled = true;
   }
