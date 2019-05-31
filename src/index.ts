@@ -9,13 +9,13 @@ Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 console.log({ env: process.env });
 const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
-const MY_TIME_ZONE: string = process.env['MY_TIME_ZONE'];
-const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '08:00', MY_TIME_ZONE, 'HH:mm', 'HH:mm');
-const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', MY_TIME_ZONE, 'HH:mm', 'HH:mm');
+const SCHEDULE_TIME_ZONE: string = process.env['SCHEDULE_TIME_ZONE'];
+const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '08:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
+const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
 const alreadyHasAppointment = new URLSearchParams(window.location.search).get('limit') === 'yes';
 
 let dataManager: DataManager = new DataManager({
-  url: 'https://www.googleapis.com/calendar/v3/calendars/' + CALENDAR_ID + '/events?key=' + API_KEY,
+  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=UTC'].join('')
   adaptor: new WebApiAdaptor(),
   crossDomain: true
 });
@@ -39,7 +39,7 @@ let scheduleObj: Schedule = new Schedule({
       endTime: { name: 'EndTime' }
     }
   },
-  // timezone: MY_TIME_ZONE,
+  // timezone: SCHEDULE_TIME_ZONE,
   workHours: {
     highlight: true,
     start: START_HOUR,
@@ -90,6 +90,8 @@ function dataBinding(e: { [key: string]: Object }): void {
         Title: event.summary || 'Busy',
         StartTime: moment(start).format(),
         EndTime: moment(end).format(),
+        startTimezone: 'UTC',
+        endTimezone: 'UTC',
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
