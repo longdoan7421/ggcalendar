@@ -150,7 +150,7 @@ function createAppointment(events: object): void {
     StartTime: startTime.format(),
     EndTime: endTime.format()
   });
-
+console.log(appointment);
   const url = alreadyHasAppointment ? '/api/add_event.php?limit=yes' : '/api/add_event.php';
   axios
     .post(url, { appointment })
@@ -162,7 +162,7 @@ function createAppointment(events: object): void {
             return scheduleObj.refreshEvents();
           case 403:
             console.log(response.data.errors);
-            alert(response.data.errors.messagge || 'You have already an appointment.');
+            alert(response.data.errors.messagge || 'You already have an appointment.');
             return;
           case 500:
             console.log(response.data.errors);
