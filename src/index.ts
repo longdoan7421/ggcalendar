@@ -6,7 +6,6 @@ const moment = require('moment-timezone');
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 
-console.log({ env: process.env });
 const CALENDAR_ID: string = process.env['CALENDAR_ID'];
 const API_KEY: string = process.env['API_KEY'];
 const SCHEDULE_TIME_ZONE: string = process.env['SCHEDULE_TIME_ZONE'];
@@ -15,7 +14,7 @@ const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', 
 const alreadyHasAppointment = new URLSearchParams(window.location.search).get('limit') === 'yes';
 
 let dataManager: DataManager = new DataManager({
-  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=UTC'].join('')
+  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=UTC'].join(''),
   adaptor: new WebApiAdaptor(),
   crossDomain: true
 });
@@ -152,22 +151,21 @@ function createAppointment(events: object): void {
     StartTime: startTime.format(),
     EndTime: endTime.format()
   });
-  console.log({appointment});
+
   const url = alreadyHasAppointment ? '/api/add_event.php?limit=yes' : '/api/add_event.php';
   axios
     .post(url, { appointment })
     .then(response => {
-      console.log({ response })
       if (response.data) {
         switch (response.data.code) {
           case 200:
             return scheduleObj.refreshEvents();
           case 403:
-            console.log(response.data.errors);
+            console.log({error: response.data.errors});
             alert(response.data.errors.messagge || 'You already have an appointment.');
             return;
           case 500:
-            console.log(response.data.errors);
+            console.log({error: response.data.errors});
             alert('Cannot create appointment.');
             return;
           default:
