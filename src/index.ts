@@ -12,9 +12,10 @@ const SCHEDULE_TIME_ZONE: string = process.env['SCHEDULE_TIME_ZONE'];
 const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '08:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
 const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
 const alreadyHasAppointment = new URLSearchParams(window.location.search).get('limit') === 'yes';
+const userTimezone = moment.tz.guess(true);
 
 let dataManager: DataManager = new DataManager({
-  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=UTC'].join(''),
+  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=', userTimezone].join(''),
   adaptor: new WebApiAdaptor(),
   crossDomain: true
 });
@@ -35,9 +36,7 @@ let scheduleObj: Schedule = new Schedule({
       location: { name: 'Location' },
       description: { name: 'Description' },
       startTime: { name: 'StartTime', validation: { required: true } },
-      endTime: { name: 'EndTime' },
-      startTimezone: { name: 'StartTimeZone' },
-      endTimezone: { name: 'EndTimeZone' }
+      endTime: { name: 'EndTime' }
     }
   },
   // timezone: SCHEDULE_TIME_ZONE,
@@ -91,8 +90,6 @@ function dataBinding(e: { [key: string]: Object }): void {
         Title: event.summary || 'Busy',
         StartTime: moment(start).format(),
         EndTime: moment(end).format(),
-        StartTimezone: 'Etc/UTC',
-        EndTimezone: 'Etc/UTC',
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
