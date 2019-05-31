@@ -88,8 +88,8 @@ function dataBinding(e: { [key: string]: Object }): void {
       scheduleData.push({
         Id: event.id,
         Title: event.summary || 'Busy',
-        StartTime: new Date(start),
-        EndTime: new Date(end),
+        StartTime: moment(start).format(),
+        EndTime: moment(end).format(),
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
