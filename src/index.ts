@@ -35,7 +35,9 @@ let scheduleObj: Schedule = new Schedule({
       location: { name: 'Location' },
       description: { name: 'Description' },
       startTime: { name: 'StartTime', validation: { required: true } },
-      endTime: { name: 'EndTime' }
+      endTime: { name: 'EndTime' },
+      startTimezone: { name: 'StartTimeZone' },
+      endTimezone: { name: 'EndTimeZone' }
     }
   },
   // timezone: SCHEDULE_TIME_ZONE,
@@ -89,8 +91,8 @@ function dataBinding(e: { [key: string]: Object }): void {
         Title: event.summary || 'Busy',
         StartTime: moment(start).format(),
         EndTime: moment(end).format(),
-        startTimezone: 'Etc/UTC',
-        endTimezone: 'Etc/UTC',
+        StartTimezone: 'Etc/UTC',
+        EndTimezone: 'Etc/UTC',
         Location: event.location || '',
         Description: event.description || '',
         IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
