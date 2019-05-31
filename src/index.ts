@@ -150,7 +150,7 @@ function createAppointment(events: object): void {
     StartTime: startTime.format(),
     EndTime: endTime.format()
   });
-console.log(appointment);
+  console.log({appointment});
   const url = alreadyHasAppointment ? '/api/add_event.php?limit=yes' : '/api/add_event.php';
   axios
     .post(url, { appointment })

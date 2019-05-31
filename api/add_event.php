@@ -26,10 +26,10 @@ if ($_GET['limit'] === 'yes') {
       'location' => isset($appointment['Location']) ? $appointment['Location'] : '',
       'description' => isset($appointment['Description']) ? $appointment['Description'] : '',
       'start' => array(
-        'dateTime' => date('c', strtotime($appointment['StartTime']))
+        'dateTime' => $appointment['StartTime']
       ),
       'end' => array(
-        'dateTime' => date('c', strtotime($appointment['EndTime']))
+        'dateTime' => $appointment['EndTime']
       )
     ];
 
