@@ -65,12 +65,14 @@ if ($_GET['limit'] === 'yes') {
         'event' => [
           'id' => $result->id,
           'link' => $result->htmlLink
-        ]
+        ],
+        'data' => $standardizedAppointment
       ]);
     } catch (Google_Service_Exception $error) {
       echo json_encode([
         'code' => 500,
-        'errors' => $error->getErrors()
+        'errors' => $error->getErrors(),
+        'data' => $standardizedAppointment
       ]);
     }
   }
