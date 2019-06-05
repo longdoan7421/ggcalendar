@@ -133,4 +133,4 @@ typings/
 
 dist/**/*.js
 src/**/*.js
-ggcalendar-sa.json
+**-sa.json
