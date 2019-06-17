@@ -30,7 +30,7 @@
   },
   "scripts": {
     "serve": "gulp serve",
-    "build": "gulp compile load-css",
+    "build": "gulp build",
     "watch": "gulp watch"
   }
 }

@@ -2,7 +2,7 @@
 
 var gulp = require('gulp');
 
-gulp.task('serve', ['compile', 'load-css'], function (done) {
+gulp.task('serve', ['build'], function (done) {
     var browserSync = require('browser-sync');
     var bs = browserSync.create('GGCalendar');
     var options = {
@@ -38,6 +38,8 @@ gulp.task('compile', function (done) {
         });
 });
 
-gulp.task('load-css', function () {
+gulp.task('css', function () {
     gulp.src('./node_modules/@syncfusion/ej2/material.css').pipe(gulp.dest('./dist/css'));
 });
+
+gulp.task('build', ['compile', 'css']);
