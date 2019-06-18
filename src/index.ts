@@ -16,7 +16,7 @@ const userTimezone = moment.tz.guess(true);
 
 let scheduleObj: Schedule;
 const dataSource: Object[] = [];
-loadEvents().then(() => {
+loadEvents().then((): void => {
   initialSchedule();
 });
 
@@ -56,12 +56,12 @@ function initialSchedule(): void {
     timeScale: {
       slotCount: 1
     },
-    popupOpen: (args: PopupOpenEventArgs) => {
+    popupOpen: (args: PopupOpenEventArgs): void => {
       if (args.type === 'Editor') {
         editCustomTemplate(args);
       }
     },
-    actionBegin: (args: ActionEventArgs) => {
+    actionBegin: (args: ActionEventArgs): void => {
       if (args.requestType === 'eventCreate') {
         args.cancel = true;
         toggleSpinner('on');
@@ -73,49 +73,49 @@ function initialSchedule(): void {
   scheduleObj.appendTo('#Schedule');
 }
 
-function loadEvents(): Promise<any> {
-  let requests = CALENDAR_IDS.map((calendarId: string) => {
-    return new Promise((resolve, reject) => {
+function loadEvents(): Promise<Object[] | void> {
+  let requests = CALENDAR_IDS.map((calendarId: string): Promise<ReturnOption> => {
+    return new Promise((resolve, reject): void => {
       new DataManager({
         url: ['https://www.googleapis.com/calendar/v3/calendars/', encodeURIComponent(calendarId), '/events?key=', API_KEY, '&timeZone=', userTimezone].join(''),
         adaptor: new WebApiAdaptor(),
         crossDomain: true
       })
-      .executeQuery(new Query())
-      .then((response: ReturnOption) => {
-        resolve(response);
-      })
-      .catch(err => {
-        reject(err);
-      });
-    }).catch(() => {
+        .executeQuery(new Query())
+        .then((response: ReturnOption): void => {
+          resolve(response);
+        })
+        .catch((err): void => {
+          reject(err);
+        });
+    }).catch((): void => {
       console.log(`Get events from calendar ${calendarId} failed.`);
     });
   });
 
   return Promise.all(requests)
-    .then((responses: { [key: string]: Object }[]) => {
+    .then((responses: { [key: string]: Object }[]): Object[] => {
       dataSource.length = 0; // remove old elements
-      responses.forEach(response => {
+      responses.forEach((response): void => {
         const { result } = response;
         dataSource.push(result);
-      })
+      });
 
       return dataSource;
     })
-    .catch(err => {
+    .catch((err): void => {
       console.log('Load events error', JSON.stringify(err));
-      alert('Cannot fetch events from google calendar')
+      alert('Cannot fetch events from google calendar');
     });
 }
 
-function dataBinding(data: { [key: string]: Object|Object[] }): void {
+function dataBinding(data: { [key: string]: Object | Object[] }): void {
   let scheduleData: Object[] = [];
   let calendarResults: { [key: string]: Object }[] = data.result as { [key: string]: Object }[];
-  calendarResults.forEach(calendarResult => {
+  calendarResults.forEach((calendarResult): void => {
     let items: { [key: string]: Object }[] = calendarResult.items as { [key: string]: Object }[];
     if (items.length > 0) {
-      for (let i: number = 0; i < items.length; i++) {
+      for (let i = 0; i < items.length; i++) {
         let event: { [key: string]: Object } = items[i];
         let when: string = (event.start as { [key: string]: Object }).dateTime as string;
         let start: string = (event.start as { [key: string]: Object }).dateTime as string;
@@ -196,20 +196,20 @@ function createAppointment(argsData: object): void {
   const url = alreadyHasAppointment ? '/api/add_event.php?limit=yes' : '/api/add_event.php';
   axios
     .post(url, { appointment })
-    .then(response => {
+    .then((response): void => {
       if (response.data) {
         switch (response.data.code) {
           case 200:
             loadEvents()
-              .then(() => scheduleObj.refreshEvents())
-              .catch(() => console.log('Refresh events failed'));
+              .then((): void => scheduleObj.refreshEvents())
+              .catch((): void => console.log('Refresh events failed'));
             return;
           case 403:
-            console.log({error: response.data.errors});
+            console.log({ error: response.data.errors });
             alert(response.data.errors.messagge || 'You already have an appointment.');
             return;
           case 500:
-            console.log({error: response.data.errors});
+            console.log({ error: response.data.errors });
             alert('Cannot create appointment.');
             return;
           default:
@@ -219,10 +219,10 @@ function createAppointment(argsData: object): void {
 
       throw new Error('Response invalid');
     })
-    .then(() => {
+    .then((): void => {
       toggleSpinner('off');
     })
-    .catch(error => {
+    .catch((error): void => {
       console.log({ error });
       toggleSpinner('off');
       alert('There is something wrong with server. Please try again later.');
