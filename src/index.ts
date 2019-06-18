@@ -1,12 +1,12 @@
 import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, ActionEventArgs } from '@syncfusion/ej2-schedule';
 import { DatePicker, TimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-calendars';
-import { DataManager, WebApiAdaptor } from '@syncfusion/ej2-data';
+import { DataManager, WebApiAdaptor, ReturnOption, Query } from '@syncfusion/ej2-data';
 import axios from 'axios';
 const moment = require('moment-timezone');
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 
-const CALENDAR_ID: string = process.env['CALENDAR_ID'];
+const CALENDAR_IDS: string[] = (process.env['CALENDAR_IDS'] as string).split('|');
 const API_KEY: string = process.env['API_KEY'];
 const SCHEDULE_TIME_ZONE: string = process.env['SCHEDULE_TIME_ZONE'];
 const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '08:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
@@ -14,91 +14,133 @@ const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', 
 const alreadyHasAppointment = new URLSearchParams(window.location.search).get('limit') === 'yes';
 const userTimezone = moment.tz.guess(true);
 
-let dataManager: DataManager = new DataManager({
-  url: ['https://www.googleapis.com/calendar/v3/calendars/', CALENDAR_ID, '/events?key=', API_KEY, '&timeZone=', userTimezone].join(''),
-  adaptor: new WebApiAdaptor(),
-  crossDomain: true
+let scheduleObj: Schedule;
+const dataSource: Object[] = [];
+loadEvents().then(() => {
+  initialSchedule();
 });
-
-let scheduleObj: Schedule = new Schedule({
-  height: '800px',
-  allowKeyboardInteraction: false,
-  allowDragAndDrop: false,
-  editorTemplate: '#EventEditorTemplate',
-  views: ['Week'],
-  dataBinding,
-  eventSettings: {
-    enableTooltip: true,
-    dataSource: dataManager,
-    fields: {
-      id: 'Id',
-      subject: { name: 'Title', validation: { required: true } },
-      location: { name: 'Location' },
-      description: { name: 'Description' },
-      startTime: { name: 'StartTime', validation: { required: true } },
-      endTime: { name: 'EndTime' }
-    }
-  },
-  // timezone: SCHEDULE_TIME_ZONE,
-  workHours: {
-    highlight: true,
-    start: START_HOUR,
-    end: END_HOUR
-  },
-  workDays: [1, 2, 3, 4, 5],
-  showWeekend: false,
-  startHour: START_HOUR,
-  endHour: END_HOUR,
-  timeScale: {
-    slotCount: 1
-  },
-  popupOpen: (args: PopupOpenEventArgs) => {
-    if (args.type === 'Editor') {
-      editCustomTemplate(args);
-    }
-  },
-  actionBegin: (args: ActionEventArgs) => {
-    if (args.requestType === 'eventCreate') {
-      args.cancel = true;
-      toggleSpinner('on');
-      createAppointment(args.data);
-    }
-  }
-});
-
-scheduleObj.appendTo('#Schedule');
 
 /*--------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------- Function -----------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------*/
-function dataBinding(e: { [key: string]: Object }): void {
-  let items: { [key: string]: Object }[] = (e.result as { [key: string]: Object }).items as { [key: string]: Object }[];
-  let scheduleData: Object[] = [];
-  if (items.length > 0) {
-    for (let i: number = 0; i < items.length; i++) {
-      let event: { [key: string]: Object } = items[i];
-      let when: string = (event.start as { [key: string]: Object }).dateTime as string;
-      let start: string = (event.start as { [key: string]: Object }).dateTime as string;
-      let end: string = (event.end as { [key: string]: Object }).dateTime as string;
-      if (!when) {
-        when = (event.start as { [key: string]: Object }).date as string;
-        start = (event.start as { [key: string]: Object }).date as string;
-        end = (event.end as { [key: string]: Object }).date as string;
+function initialSchedule(): void {
+  scheduleObj = new Schedule({
+    height: '800px',
+    allowKeyboardInteraction: false,
+    allowDragAndDrop: false,
+    editorTemplate: '#EventEditorTemplate',
+    views: ['Week'],
+    dataBinding: dataBinding,
+    eventSettings: {
+      enableTooltip: true,
+      dataSource: new DataManager(dataSource),
+      fields: {
+        id: 'Id',
+        subject: { name: 'Title', validation: { required: true } },
+        location: { name: 'Location' },
+        description: { name: 'Description' },
+        startTime: { name: 'StartTime', validation: { required: true } },
+        endTime: { name: 'EndTime' }
       }
-      scheduleData.push({
-        Id: event.id,
-        Title: event.summary || 'Busy',
-        StartTime: moment(start).format(),
-        EndTime: moment(end).format(),
-        Location: event.location || '',
-        Description: event.description || '',
-        IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
-        IsReadonly: true,
-        IsBlock: true
-      });
+    },
+    // timezone: SCHEDULE_TIME_ZONE,
+    workHours: {
+      highlight: true,
+      start: START_HOUR,
+      end: END_HOUR
+    },
+    workDays: [1, 2, 3, 4, 5],
+    showWeekend: false,
+    startHour: START_HOUR,
+    endHour: END_HOUR,
+    timeScale: {
+      slotCount: 1
+    },
+    popupOpen: (args: PopupOpenEventArgs) => {
+      if (args.type === 'Editor') {
+        editCustomTemplate(args);
+      }
+    },
+    actionBegin: (args: ActionEventArgs) => {
+      if (args.requestType === 'eventCreate') {
+        args.cancel = true;
+        toggleSpinner('on');
+        createAppointment(args.data);
+      }
     }
-  }
-  e.result = scheduleData;
+  });
+
+  scheduleObj.appendTo('#Schedule');
+}
+
+function loadEvents(): Promise<any> {
+  let requests = CALENDAR_IDS.map((calendarId: string) => {
+    return new Promise((resolve, reject) => {
+      new DataManager({
+        url: ['https://www.googleapis.com/calendar/v3/calendars/', encodeURIComponent(calendarId), '/events?key=', API_KEY, '&timeZone=', userTimezone].join(''),
+        adaptor: new WebApiAdaptor(),
+        crossDomain: true
+      })
+      .executeQuery(new Query())
+      .then((response: ReturnOption) => {
+        resolve(response);
+      })
+      .catch(err => {
+        reject(err);
+      });
+    }).catch(() => {
+      console.log(`Get events from calendar ${calendarId} failed.`);
+    });
+  });
+
+  return Promise.all(requests)
+    .then((responses: { [key: string]: Object }[]) => {
+      dataSource.length = 0; // remove old elements
+      responses.forEach(response => {
+        const { result } = response;
+        dataSource.push(result);
+      })
+
+      return dataSource;
+    })
+    .catch(err => {
+      console.log('Load events error', JSON.stringify(err));
+      alert('Cannot fetch events from google calendar')
+    });
+}
+
+function dataBinding(data: { [key: string]: Object|Object[] }): void {
+  let scheduleData: Object[] = [];
+  let calendarResults: { [key: string]: Object }[] = data.result as { [key: string]: Object }[];
+  calendarResults.forEach(calendarResult => {
+    let items: { [key: string]: Object }[] = calendarResult.items as { [key: string]: Object }[];
+    if (items.length > 0) {
+      for (let i: number = 0; i < items.length; i++) {
+        let event: { [key: string]: Object } = items[i];
+        let when: string = (event.start as { [key: string]: Object }).dateTime as string;
+        let start: string = (event.start as { [key: string]: Object }).dateTime as string;
+        let end: string = (event.end as { [key: string]: Object }).dateTime as string;
+        if (!when) {
+          when = (event.start as { [key: string]: Object }).date as string;
+          start = (event.start as { [key: string]: Object }).date as string;
+          end = (event.end as { [key: string]: Object }).date as string;
+        }
+        scheduleData.push({
+          Id: event.id,
+          Title: event.summary || 'Busy',
+          StartTime: moment(start).format(),
+          EndTime: moment(end).format(),
+          Location: event.location || '',
+          Description: event.description || '',
+          IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
+          IsReadonly: true,
+          IsBlock: true
+        });
+      }
+    }
+  });
+
+  data.result = scheduleData;
 }
 
 function editCustomTemplate(args: PopupOpenEventArgs): void {
@@ -129,8 +171,8 @@ function editCustomTemplate(args: PopupOpenEventArgs): void {
   }
 }
 
-function createAppointment(events: object): void {
-  const event = events[0];
+function createAppointment(argsData: object): void {
+  const event = argsData[0];
 
   const startYear = event['StartTime'].getFullYear();
   const startMonth = event['StartTime'].getMonth() + 1;
@@ -158,7 +200,10 @@ function createAppointment(events: object): void {
       if (response.data) {
         switch (response.data.code) {
           case 200:
-            return scheduleObj.refreshEvents();
+            loadEvents()
+              .then(() => scheduleObj.refreshEvents())
+              .catch(() => console.log('Refresh events failed'));
+            return;
           case 403:
             console.log({error: response.data.errors});
             alert(response.data.errors.messagge || 'You already have an appointment.');

@@ -56,10 +56,11 @@ if ($_GET['limit'] === 'yes') {
 
     $service = new Google_Service_Calendar($client);
     $event = new Google_Service_Calendar_Event($standardizedAppointment);
-    $calendarId = getenv('CALENDAR_ID');
+    $calendarIds = getenv('CALENDAR_IDS');
+    $mainCalendarId = explode('|', $calendarIds)[0];
 
     try {
-    $result = $service->events->insert($calendarId, $event);
+    $result = $service->events->insert($mainCalendarId, $event);
       echo json_encode([
         'code' => 200,
         'event' => [
