@@ -18,7 +18,6 @@ const userTimezone = moment.tz.guess(true);
 let scheduleObj: Schedule;
 let dataSource: Object[] = [];
 fetchEvents().then((fetchResult): void => {
-  console.log({fetchResult});
   initialSchedule(fetchResult);
 });
 
@@ -26,7 +25,7 @@ fetchEvents().then((fetchResult): void => {
 /*----------------------------------------------- Function -----------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------*/
 function initialSchedule(fetchResult: boolean): void {
-  console.log(JSON.stringify(dataSource));
+  console.log({dataSource});
   scheduleObj = new Schedule({
     height: '800px',
     allowKeyboardInteraction: false,
@@ -34,7 +33,7 @@ function initialSchedule(fetchResult: boolean): void {
     editorTemplate: '#EventEditorTemplate',
     views: ['Week'],
     readonly: !fetchResult,
-    dataBinding: dataBinding,
+    dataBinding: bindEventsToSchedule,
     eventSettings: {
       enableTooltip: true,
       dataSource: new DataManager(dataSource),
@@ -78,10 +77,21 @@ function initialSchedule(fetchResult: boolean): void {
 }
 
 function fetchEvents(): Promise<boolean> {
+  const timeMin: string = moment().subtract(2, 'M').format();
   let requests = CALENDAR_IDS.map((calendarId: string): Promise<ReturnOption> => {
     return new Promise((resolve, reject): void => {
       new DataManager({
-        url: ['https://www.googleapis.com/calendar/v3/calendars/', encodeURIComponent(calendarId), '/events?key=', API_KEY, '&timeZone=', userTimezone].join(''),
+        url: [
+          'https://www.googleapis.com/calendar/v3/calendars/',
+          encodeURIComponent(calendarId),
+          '/events?key=',
+          API_KEY,
+          '&maxResults=2500',
+          '&timeZone=',
+          encodeURIComponent(userTimezone),
+          '&timeMin=',
+          encodeURIComponent(timeMin),
+        ].join(''),
         adaptor: new WebApiAdaptor(),
         crossDomain: true
       })
@@ -113,38 +123,48 @@ function fetchEvents(): Promise<boolean> {
     });
 }
 
-function dataBinding(data: { [key: string]: Object | Object[] }): void {
-  let scheduleData: Object[] = [];
-  let calendarResults: { [key: string]: Object }[] = data.result as { [key: string]: Object }[];
-  calendarResults.forEach((calendarResult): void => {
-    let items: { [key: string]: Object }[] = calendarResult.items as { [key: string]: Object }[];
-    if (items.length > 0) {
-      for (let i = 0; i < items.length; i++) {
-        let event: { [key: string]: Object } = items[i];
-        let when: string = (event.start as { [key: string]: Object }).dateTime as string;
-        let start: string = (event.start as { [key: string]: Object }).dateTime as string;
-        let end: string = (event.end as { [key: string]: Object }).dateTime as string;
-        if (!when) {
-          when = (event.start as { [key: string]: Object }).date as string;
-          start = (event.start as { [key: string]: Object }).date as string;
-          end = (event.end as { [key: string]: Object }).date as string;
-        }
-        scheduleData.push({
-          Id: event.id,
-          Title: event.summary || 'Busy',
-          StartTime: moment(start).format(),
-          EndTime: moment(end).format(),
-          Location: event.location || '',
-          Description: event.description || '',
-          IsAllDay: !(event.start as { [key: string]: Object }).dateTime,
-          IsReadonly: true,
-          IsBlock: true
-        });
-      }
-    }
-  });
+function bindEventsToSchedule(data: { [key: string]: Object | Object[] }): void {
+  try {
+    let scheduleData: Object[] = [];
+    let calendarResults: { [key: string]: Object }[] = data.result as { [key: string]: Object }[];
+    calendarResults.forEach((calendarResult): void => {
+      let items: { [key: string]: Object }[] = calendarResult.items as { [key: string]: Object }[];
+      if (items.length > 0) {
+        for (let i = 0; i < items.length; i++) {
+          let event: { [key: string]: Object } = items[i];
+          let start: { [key: string]: Object } = event.start as { [key: string]: Object };
+          let end: { [key: string]: Object } = event.end as { [key: string]: Object };
+          if (!start || !end) {
+            continue;
+          }
 
-  data.result = scheduleData;
+          let startTime: string = start.dateTime as string;
+          let endTime: string = end.dateTime as string;
+          let isAllDay: boolean = !startTime;
+          if (isAllDay) {
+            startTime = start.date as string;
+            endTime = end.date as string;
+          }
+
+          scheduleData.push({
+            Id: event.id,
+            Title: event.summary || 'Busy',
+            StartTime: moment(startTime).format(),
+            EndTime: moment(endTime).format(),
+            Location: event.location || '',
+            Description: event.description || '',
+            IsAllDay: isAllDay,
+            IsReadonly: true,
+            IsBlock: true
+          });
+        }
+      }
+    });
+
+    data.result = scheduleData;
+  } catch (error) {
+    console.log(`Binding data error: ${error}`);
+  }
 }
 
 function editCustomTemplate(args: PopupOpenEventArgs): void {
@@ -190,6 +210,13 @@ function createAppointment(argsData: object): void {
     const startMinute = event['StartTime'].getMinutes();
     startTime = moment(`${startYear}-${startMonth}-${startDay} ${startHour}:${startMinute}`, 'YYYY-M-D H:m');
   }
+
+  const validationTime = moment().add(30, 'm');
+  if (!startTime || startTime.isBefore(validationTime)) {
+    alert('Please select a date time at least 30 minutes from now');
+    return;
+  }
+
   let endTime = startTime.clone().add(1, 'h');
 
   const appointment = Object.assign({}, event, {
