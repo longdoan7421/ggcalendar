@@ -2,6 +2,7 @@ import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, Actio
 import { DatePicker, TimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-calendars';
 import { DataManager, WebApiAdaptor, ReturnOption, Query } from '@syncfusion/ej2-data';
 import axios from 'axios';
+import { isEmpty } from 'lodash';
 const moment = require('moment-timezone');
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
@@ -16,20 +17,21 @@ const userTimezone = moment.tz.guess(true);
 
 let scheduleObj: Schedule;
 const dataSource: Object[] = [];
-loadEvents().then((): void => {
-  initialSchedule();
+fetchEvents().then((fetchResult): void => {
+  initialSchedule(fetchResult);
 });
 
 /*--------------------------------------------------------------------------------------------------------*/
 /*----------------------------------------------- Function -----------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------*/
-function initialSchedule(): void {
+function initialSchedule(fetchResult: boolean): void {
   scheduleObj = new Schedule({
     height: '800px',
     allowKeyboardInteraction: false,
     allowDragAndDrop: false,
     editorTemplate: '#EventEditorTemplate',
     views: ['Week'],
+    readonly: !fetchResult,
     dataBinding: dataBinding,
     eventSettings: {
       enableTooltip: true,
@@ -73,7 +75,7 @@ function initialSchedule(): void {
   scheduleObj.appendTo('#Schedule');
 }
 
-function loadEvents(): Promise<Object[] | void> {
+function fetchEvents(): Promise<boolean> {
   let requests = CALENDAR_IDS.map((calendarId: string): Promise<ReturnOption> => {
     return new Promise((resolve, reject): void => {
       new DataManager({
@@ -86,26 +88,26 @@ function loadEvents(): Promise<Object[] | void> {
           resolve(response);
         })
         .catch((err): void => {
-          reject(err);
+          console.log(`Get events from calendar ${calendarId} failed.`);
+          if (!isEmpty(err)) reject(err);
         });
-    }).catch((): void => {
-      console.log(`Get events from calendar ${calendarId} failed.`);
     });
   });
 
   return Promise.all(requests)
-    .then((responses: { [key: string]: Object }[]): Object[] => {
+    .then((responses: { [key: string]: Object }[]): boolean => {
       dataSource.length = 0; // remove old elements
       responses.forEach((response): void => {
         const { result } = response;
         dataSource.push(result);
       });
 
-      return dataSource;
+      return true;
     })
-    .catch((err): void => {
-      console.log('Load events error', JSON.stringify(err));
+    .catch((err): boolean => {
+      console.log('Fetch events error', JSON.stringify(err));
       alert('Cannot fetch events from google calendar');
+      return false;
     });
 }
 
@@ -200,7 +202,7 @@ function createAppointment(argsData: object): void {
       if (response.data) {
         switch (response.data.code) {
           case 200:
-            loadEvents()
+            fetchEvents()
               .then((): void => scheduleObj.refreshEvents())
               .catch((): void => console.log('Refresh events failed'));
             return;
