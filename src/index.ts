@@ -16,7 +16,7 @@ const alreadyHasAppointment = new URLSearchParams(window.location.search).get('l
 const userTimezone = moment.tz.guess(true);
 
 let scheduleObj: Schedule;
-const dataSource: Object[] = [];
+let dataSource: Object[] = [];
 fetchEvents().then((fetchResult): void => {
   initialSchedule(fetchResult);
 });
