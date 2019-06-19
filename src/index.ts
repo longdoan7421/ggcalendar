@@ -18,6 +18,7 @@ const userTimezone = moment.tz.guess(true);
 let scheduleObj: Schedule;
 let dataSource: Object[] = [];
 fetchEvents().then((fetchResult): void => {
+  console.log({fetchResult});
   initialSchedule(fetchResult);
 });
 
@@ -25,6 +26,7 @@ fetchEvents().then((fetchResult): void => {
 /*----------------------------------------------- Function -----------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------*/
 function initialSchedule(fetchResult: boolean): void {
+  console.log(JSON.stringify(dataSource));
   scheduleObj = new Schedule({
     height: '800px',
     allowKeyboardInteraction: false,
