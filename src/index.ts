@@ -86,11 +86,12 @@ function fetchEvents(): Promise<boolean> {
           encodeURIComponent(calendarId),
           '/events?key=',
           API_KEY,
-          '&maxResults=2500',
           '&timeZone=',
           encodeURIComponent(userTimezone),
           '&timeMin=',
           encodeURIComponent(timeMin),
+          '&maxResults=2500',
+          '&singleEvents=true'
         ].join(''),
         adaptor: new WebApiAdaptor(),
         crossDomain: true
@@ -140,7 +141,7 @@ function bindEventsToSchedule(data: { [key: string]: Object | Object[] }): void 
 
           let startTime: string = start.dateTime as string;
           let endTime: string = end.dateTime as string;
-          let isAllDay: boolean = !startTime;
+          let isAllDay = !startTime;
           if (isAllDay) {
             startTime = start.date as string;
             endTime = end.date as string;
