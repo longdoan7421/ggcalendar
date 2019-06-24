@@ -3,7 +3,8 @@ import { DatePicker, TimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-
 import { DataManager, WebApiAdaptor, ReturnOption, Query } from '@syncfusion/ej2-data';
 import axios from 'axios';
 import { isEmpty } from 'lodash';
-const moment = require('moment-timezone');
+import { ISO_8601 } from 'moment';
+import moment = require('moment-timezone');
 
 Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 
@@ -68,7 +69,7 @@ function initialSchedule(fetchResult: boolean): void {
       if (args.requestType === 'eventCreate') {
         args.cancel = true;
         toggleSpinner('on');
-        createAppointment(args.data);
+        createAppointment(args.data).then((): void => toggleSpinner('off'));
       }
     }
   });
@@ -196,9 +197,20 @@ function editCustomTemplate(args: PopupOpenEventArgs): void {
   }
 }
 
-function createAppointment(argsData: object): void {
-  const event = argsData[0];
+async function createAppointment(argsData: object): Promise<boolean> {
+  const event: Object = argsData[0];
+  const appointment: Object = formatEvent(event);
+  const validationErrors: string[] = validateAppointment(appointment);
+  if (validationErrors.length) {
+    alert(validationErrors.join('\n'));
+    return false;
+  }
 
+  const submitResult: boolean = await submitAppointment(appointment);
+  return submitResult;
+}
+
+function formatEvent(event: Object): Object {
   const startYear = event['StartTime'].getFullYear();
   const startMonth = event['StartTime'].getMonth() + 1;
   const startDay = event['StartTime'].getDate();
@@ -212,12 +224,6 @@ function createAppointment(argsData: object): void {
     startTime = moment(`${startYear}-${startMonth}-${startDay} ${startHour}:${startMinute}`, 'YYYY-M-D H:m');
   }
 
-  const validationTime = moment().add(30, 'm');
-  if (!startTime || startTime.isBefore(validationTime)) {
-    alert('Please select a date time at least 30 minutes from now');
-    return;
-  }
-
   let endTime = startTime.clone().add(1, 'h');
 
   const appointment = Object.assign({}, event, {
@@ -225,25 +231,41 @@ function createAppointment(argsData: object): void {
     EndTime: endTime.format()
   });
 
+  return appointment;
+}
+
+function validateAppointment(appointment: Object): string[] {
+  let errors = [];
+
+  const startTime = moment(appointment['StartTime'], ISO_8601);
+  const validationTime = moment().add(30, 'm');
+  if (!startTime || startTime.isBefore(validationTime)) {
+    errors.push('Please select a date time at least 30 minutes from now');
+  }
+
+  return errors;
+}
+
+async function submitAppointment(appointment: Object): Promise<boolean> {
   const url = alreadyHasAppointment ? '/api/add_event.php?limit=yes' : '/api/add_event.php';
-  axios
+  return axios
     .post(url, { appointment })
-    .then((response): void => {
+    .then((response): boolean => {
       if (response.data) {
         switch (response.data.code) {
           case 200:
             fetchEvents()
               .then((): void => scheduleObj.refreshEvents())
               .catch((): void => console.log('Refresh events failed'));
-            return;
+            return true;
           case 403:
             console.log({ error: response.data.errors });
             alert(response.data.errors.messagge || 'You already have an appointment.');
-            return;
+            return true;
           case 500:
             console.log({ error: response.data.errors });
             alert('Cannot create appointment.');
-            return;
+            return true;
           default:
             break;
         }
@@ -251,13 +273,10 @@ function createAppointment(argsData: object): void {
 
       throw new Error('Response invalid');
     })
-    .then((): void => {
-      toggleSpinner('off');
-    })
-    .catch((error): void => {
+    .catch((error): boolean => {
       console.log({ error });
-      toggleSpinner('off');
       alert('There is something wrong with server. Please try again later.');
+      return false;
     });
 }
 
