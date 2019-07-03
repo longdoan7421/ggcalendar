@@ -22,6 +22,15 @@
             padding-right: 16px;
         }
 
+        .custom-event-editor .read-only {
+            opacity: 0.5;
+        }
+
+        .custom-event-editor .read-only .e-date-icon,
+        .custom-event-editor .read-only .e-time-icon {
+            visibility: hidden;
+        }
+
         .e-schedule {
             font-family: "Roboto", "Segoe UI", "GeezaPro", "DejaVu Serif", "sans-serif", "-apple-system", "BlinkMacSystemFont";
         }
@@ -72,13 +81,25 @@
             <tr>
                 <td class="e-textlabel">Start Day</td>
                 <td colspan="4">
-                    <input type="text" id="StartTime" class="e-field" name="StartTime" />
+                    <input type="text" class="e-field" id="StartTime" name="StartTime" />
                 </td>
             </tr>
             <tr>
                 <td class="e-textlabel">Start Time</td>
                 <td colspan="4">
-                    <input type="text" id="StartTimeWithoutDate" class="e-field" name="StartTimeWithoutDate" />
+                    <input type="text" class="e-field" id="StartTimeWithoutDate" name="StartTimeWithoutDate" />
+                </td>
+            </tr>
+            <tr>
+                <td class="e-textlabel">End Day</td>
+                <td colspan="4" class="read-only">
+                    <input type="text" class="e-field" id="EndTime" name="EndTimeReadOnly" />
+                </td>
+            </tr>
+            <tr>
+                <td class="e-textlabel">End Time</td>
+                <td colspan="4" class="read-only">
+                    <input type="text" class="e-field" id="EndTimeWithoutDate" name="EndTimeWithoutDateReadOnly" />
                 </td>
             </tr>
             <tr>

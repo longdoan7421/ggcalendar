@@ -1,5 +1,5 @@
 import { Schedule, Day, Week, WorkWeek, Month, Agenda, PopupOpenEventArgs, ActionEventArgs } from '@syncfusion/ej2-schedule';
-import { DatePicker, TimePicker, RenderDayCellEventArgs } from '@syncfusion/ej2-calendars';
+import { DatePicker, TimePicker, RenderDayCellEventArgs, ChangedEventArgs, ChangeEventArgs } from '@syncfusion/ej2-calendars';
 import { DataManager, WebApiAdaptor, ReturnOption, Query } from '@syncfusion/ej2-data';
 import axios from 'axios';
 import { isEmpty } from 'lodash';
@@ -18,6 +18,9 @@ const userTimezone = moment.tz.guess(true);
 
 let scheduleObj: Schedule;
 let dataSource: Object[] = [];
+let endDatePicker: DatePicker | null = null;
+let endTimePicker: TimePicker | null = null;
+
 fetchEvents().then((fetchResult): void => {
   initialSchedule(fetchResult);
 });
@@ -62,7 +65,7 @@ function initialSchedule(fetchResult: boolean): void {
     },
     popupOpen: (args: PopupOpenEventArgs): void => {
       if (args.type === 'Editor') {
-        editCustomTemplate(args);
+        changeEditorTemplate(args);
       }
     },
     actionBegin: (args: ActionEventArgs): void => {
@@ -169,9 +172,11 @@ function bindEventsToSchedule(data: { [key: string]: Object | Object[] }): void 
   }
 }
 
-function editCustomTemplate(args: PopupOpenEventArgs): void {
-  let startTimeElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
-  let startTimeWithoutDateElement: HTMLInputElement = args.element.querySelector('#StartTimeWithoutDate') as HTMLInputElement;
+function changeEditorTemplate(args: PopupOpenEventArgs): void {
+  const startTimeElement: HTMLInputElement = args.element.querySelector('#StartTime') as HTMLInputElement;
+  const startTimeWithoutDateElement: HTMLInputElement = args.element.querySelector('#StartTimeWithoutDate') as HTMLInputElement;
+  const endTimeElement: HTMLInputElement = args.element.querySelector('#EndTime') as HTMLInputElement;
+  const endTimeWithoutDateElement: HTMLInputElement = args.element.querySelector('#EndTimeWithoutDate') as HTMLInputElement;
   const selectedTime = startTimeElement.value;
 
   if (!startTimeElement.classList.contains('e-datepicker')) {
@@ -180,21 +185,58 @@ function editCustomTemplate(args: PopupOpenEventArgs): void {
       format: 'dd/MM/yyyy',
       value: new Date(selectedTime) || new Date(),
       renderDayCell: setDisabledDate,
+      change: onChangeStartDay,
     }, startTimeElement);
   }
 
   if (!startTimeWithoutDateElement.classList.contains('e-timepicker')) {
-    const startHour = START_HOUR;
-    const endHour = moment(END_HOUR, 'HH:mm').subtract(1, 'h').format('HH:mm');
+    const startHour = moment(START_HOUR, 'HH:mm');
+    const endHour = moment(END_HOUR, 'HH:mm').subtract(1, 'h');
     new TimePicker({
       strictMode: true,
       format: 'HH:mm',
-      min: new Date(['3/5/2019', startHour].join(' ')),
-      max: new Date(['3/5/2019', endHour].join(' ')),
+      min: startHour.toDate(),
+      max: endHour.toDate(),
       value: new Date(selectedTime) || new Date(),
-      step: 15
+      step: 15,
+      change: onChangeStartTime,
     }, startTimeWithoutDateElement);
   }
+
+  if (!endTimeElement.classList.contains('e-datepicker')) {
+    endDatePicker = new DatePicker({
+      strictMode: true,
+      format: 'dd/MM/yyyy',
+      value: new Date(selectedTime) || new Date(),
+      renderDayCell: setDisabledDate,
+      readonly: true
+    }, endTimeElement);
+  }
+
+  if (!endTimeWithoutDateElement.classList.contains('e-timepicker')) {
+    const startHour = moment(START_HOUR, 'HH:mm');
+    const endHour = moment(END_HOUR, 'HH:mm').subtract(1, 'h');
+    const selectedTimeInMiliseconds: number = new Date(selectedTime).getTime();
+    endTimePicker = new TimePicker({
+      strictMode: true,
+      format: 'HH:mm',
+      min: startHour.toDate(),
+      max: endHour.toDate(),
+      value: moment(selectedTimeInMiliseconds).add(1, 'h').toDate() || new Date(),
+      step: 15,
+      readonly: true
+    }, endTimeWithoutDateElement);
+  }
+}
+
+function onChangeStartDay(event: ChangedEventArgs): void {
+  const selectedTime: Date = event.value;
+  endDatePicker.value = selectedTime;
+}
+
+function onChangeStartTime(event: ChangeEventArgs): void {
+  const selectedTime: Date = event.value;
+  endTimePicker.value = moment(selectedTime.getTime()).add(1, 'h').toDate();
 }
 
 async function createAppointment(argsData: object): Promise<boolean> {
