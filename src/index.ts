@@ -11,7 +11,7 @@ Schedule.Inject(Day, Week, WorkWeek, Month, Agenda);
 const CALENDAR_IDS: string[] = (process.env['CALENDAR_IDS'] as string).split('|');
 const API_KEY: string = process.env['API_KEY'];
 const SCHEDULE_TIME_ZONE: string = process.env['SCHEDULE_TIME_ZONE'];
-const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '08:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
+const START_HOUR: string = convertToLocalTime(process.env['START_HOUR'] || '09:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
 const END_HOUR: string = convertToLocalTime(process.env['END_HOUR'] || '18:00', SCHEDULE_TIME_ZONE, 'HH:mm', 'HH:mm');
 const alreadyHasAppointment = new URLSearchParams(window.location.search).get('limit') === 'yes';
 const userTimezone = moment.tz.guess(true);
