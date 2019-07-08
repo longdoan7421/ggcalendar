@@ -143,22 +143,24 @@ function bindEventsToSchedule(data: { [key: string]: Object | Object[] }): void 
             continue;
           }
 
-          let startTime: string = start.dateTime as string;
-          let endTime: string = end.dateTime as string;
           let title: string = event.summary as string || 'Busy';
-          let isAllDay = !startTime;
+          let startTime;
+          let endTime;
+          let isAllDay: boolean = !start.dateTime as boolean;
           if (isAllDay) {
-            startTime = start.date as string;
-            endTime = end.date as string;
+            startTime = moment(start.date as string);
+            endTime = moment(end.date as string);
           } else {
-            title += `<br /><span class="e-time">${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}</span>`;
+            startTime = moment(start.dateTime);
+            endTime = moment(end.dateTime);
+            title += `<br /><span class="e-time">${startTime.format('DD/MM/YYYY hh:mm A')} - ${endTime.format('DD/MM/YYYY hh:mm A')}</span>`;
           }
 
           scheduleData.push({
             Id: event.id,
             Title: title,
-            StartTime: moment(startTime).format(),
-            EndTime: moment(endTime).format(),
+            StartTime: startTime.format(),
+            EndTime: endTime.format(),
             Location: event.location || '',
             Description: event.description || '',
             IsAllDay: isAllDay,
