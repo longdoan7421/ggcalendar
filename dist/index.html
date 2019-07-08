@@ -38,9 +38,16 @@
         .e-schedule .e-block-appointment {
             background: rgb(156, 124, 216);
             color: #ffffff;
-            font-size: 16px;
-            font-weight: 500;
             border: 1px solid #ffffff;
+        }
+
+        .e-schedule .e-block-appointment .e-subject {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .e-schedule .e-block-appointment .e-time {
+            font-size: 12px;
         }
 
         .e-schedule .e-vertical-view .e-date-header-wrap table col,
@@ -53,13 +60,11 @@
             height: 100px;
         }
 
-        .e-schedule .e-month-view .e-work-cells,
-        .e-schedule .e-month-view .e-date-header-wrap table col {
-            width: 200px;
-        }
-
-        .e-schedule .e-month-view .e-work-cells {
-            height: 200px;
+        .e-schedule .e-vertical-view .e-time-cells-wrap .e-time-cells {
+            border-bottom-color: rgba(0, 0, 0, 0.12);
+            display: flex;
+            justify-content: center;
+            padding-top: 5px;
         }
     </style>
 </head>
