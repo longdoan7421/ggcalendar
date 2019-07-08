@@ -145,15 +145,18 @@ function bindEventsToSchedule(data: { [key: string]: Object | Object[] }): void 
 
           let startTime: string = start.dateTime as string;
           let endTime: string = end.dateTime as string;
+          let title: string = event.summary as string || 'Busy';
           let isAllDay = !startTime;
           if (isAllDay) {
             startTime = start.date as string;
             endTime = end.date as string;
+          } else {
+            title += `<br /><span class="e-time">${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}</span>`;
           }
 
           scheduleData.push({
             Id: event.id,
-            Title: event.summary || 'Busy',
+            Title: title,
             StartTime: moment(startTime).format(),
             EndTime: moment(endTime).format(),
             Location: event.location || '',
